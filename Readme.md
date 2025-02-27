@@ -50,7 +50,7 @@ ChatGPTのメモリデータを**最新のものから順に取得**し、JSON�
 
 ## **保存するデータフォーマット**
 ### **取得済みのメモリデータ（統合せず、別々に保存）**
-```json
+\```json
 {
   "memory": [
     {
@@ -63,27 +63,27 @@ ChatGPTのメモリデータを**最新のものから順に取得**し、JSON�
     }
   ]
 }
-```
+\```
 
 ### **不足している日付リスト（補完しない）**
-```json
+\```json
 {
   "missing_dates": [
     "YYYY-MM-DD",
     "YYYY-MM-DD"
   ]
 }
-```
+\```
 
 ### **取得結果ログ**
-```json
+\```json
 {
   "total_memory_count": 123,  // ChatGPTが持っているメモリの総件数
   "retrieved_memory_count": 120,  // 取得済みのメモリ件数
   "missing_memory_count": 3,  // 取得漏れがあれば件数を記録
   "missing_dates": ["YYYY-MM-DD", "YYYY-MM-DD"]
 }
-```
+\```
 
 
 ```
