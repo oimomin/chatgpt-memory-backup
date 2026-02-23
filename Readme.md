@@ -1,170 +1,316 @@
 # ChatGPT メモリバックアップ用プロンプト
 
 ## 概要
-プロンプトを ChatGPT に入力すると、メモリデータを可能な範囲でバックアップし、JSONファイルとしてダウンロードできます。
+プロンプトを ChatGPT に入力すると、メモリデータ(Model Set Context)を可能な範囲でバックアップし、JSONファイルとしてダウンロードできます。
 
-
-## 【推奨】プロンプト （10件ごとの処理）
-
-## 🛠 使い方
-負荷が高い処理が連続するため、新規チャットを立ち上げてから実行することを推奨します。
-チャット入力欄にプロンプトを貼り付けてChatGPTに送信してください。
-10件ごとにJSONファイルを生成して止まります。
-未取得のメモリがある場合は「続きをお願い」してください。
-
-````markdown
-ChatGPTが覚えていること（メモリ）を**できる限り出力**してください。そのあとにJSONファイルに保存してください。   
-**重要：ChatGPTが持っているメモリデータのみを取得し、それ以外の情報を補完・推測しないこと。**  
-
-可能であれば、各メモリデータの「記録された日付」も一緒に出力してください。  
-日付情報がない場合は、無理に推測せず「不明」として扱ってください。  
-
----
-
-### **まず最初にやること**
-1. ChatGPTが覚えているメモリを、チャットにできる限り表示する  
-2. 最新のメモリの日付を取得（可能なら）  
-3. 最古のメモリの日付を取得（可能なら）  
-4. 取得したメモリの範囲を記録し、途中で止まったときのアンカーにする  
-
----
-
-### **バックアップ手順**
-1. 最新のメモリデータを最優先で取得し、JSON形式で保存する  
-   - 1回の取得で最大10件までに制限する  
-   - ファイル名は memory_backup_part_1.json, memory_backup_part_2.json など連番で管理する  
-   - 取得したデータの件数と範囲をログとして出力する  
-
-2. 最新データをすべて取得し終えたら、過去のメモリデータを取得する  
-   - 取得順は「新しいものから古いものへ」  
-   - **途中で止まった場合、どこまで取得できたかを記録する**  
-     - **最後に取得したメモリの日付（可能なら）**  
-     - **取得済みの件数**  
-     - **保存したファイルの情報**  
-   - **次回の再開時には、最後に取得したメモリの日付の次のデータから開始する**  
-
-3. データ取得ができなくなった場合の対応
-   - 新しいデータが取得できなくなった場合
-     - 取得可能なデータがなくなったら、バックアップを終了するのではなく、完了条件の検証に移る
-   - 取得できた範囲をログに記録し、次回の実行で続きから再開できるようにする  
-
-4. **バックアップの完了条件（全て満たしたら完了）**
-   - **取得したメモリの件数 = バックアップ済みの件数**
-   - **バックアップデータに重複・抜けがない（ハッシュ照合で確認）**
-   - **取得した「最新のメモリの日付」と、バックアップの最新データの日付が一致している（可能なら）**
-   - **取得した「最古のメモリの日付」と、バックアップの最古データの日付が一致している（可能なら）**
-
-5. **すべてのデータを取得できたことを確認し、完了報告をする**  
-
----
-
-### **保存するデータフォーマット**
-```json 
-{
-  "memory": [
-    {
-      "date": "YYYY-MM-DD",  // 日付情報がある場合
-      "content": "メモリの内容"
-    },
-    {
-      "date": "不明",  // 日付が不明な場合
-      "content": "メモリの内容"
-    }
-  ],
-  "log": {
-    "last_saved_date": "YYYY-MM-DD",
-    "total_saved_entries": 100,
-    "backup_files": [
-      "memory_backup_part_1.json",
-      "memory_backup_part_2.json"
-    ]
-  }
-}
-```
- 
-````
-
-
-## 【自動・非推奨】プロンプト
-
-## 🛠 使い方
-負荷が高い処理が連続するため、新規チャットを立ち上げてから実行することを推奨します。
-チャット入力欄にプロンプトを貼り付けてChatGPTに送信してください。
-データの抜け漏れが発生する可能性が高いです。
-
-````markdown
-ChatGPTが覚えているメモリデータを**できる限り出力**し、JSONファイルに保存してください。  
-**重要：ChatGPTが持っているメモリデータのみを取得し、それ以外の情報を補完・推測しないこと。**  
-
-可能であれば、各メモリデータの「記録された日付」も一緒に出力してください。  
-日付情報がない場合は、無理に推測せず「不明」として扱ってください。  
-
----
-
-## **まず最初にやること**
-1. ChatGPTが覚えているメモリを、チャットにできる限り表示する  
-2. 最古のメモリの日付を取得（可能なら）  
-3. 最新のメモリの日付を取得（可能なら）  
-4. 取得したメモリの範囲を記録し、途中で止まったときのアンカーにする  
-
----
-
-## **バックアップ手順**
-### **1. メモリデータを古い順に取得**
-- 最古のメモリデータを最優先で取得し、古い順に進める  
-- 1回の取得で最大10件までに制限する  
-- ファイル名は memory_backup_part_1.json, memory_backup_part_2.json など連番で管理する  
-- 取得したデータの件数と範囲をログとして出力する  
-
-### **2. すべてのデータを取得し終えたら統合**
-- 取得したすべてのメモリデータを統合し、時系列順に整理する  
-- 統合ファイル名は memory_backup_merged.json とする  
-- 統合後のファイル情報と件数をログに記録する  
-
-### **3. 取得できなくなった場合の対応**
-- 取得可能なデータがなくなったら、バックアップを終了するのではなく、完了条件の検証に移る  
-- 取得できた範囲をログに記録し、次回の実行で続きから再開できるようにする  
-
-### **4. バックアップの完了条件**
-以下の条件をすべて満たしたら完了とする：  
-- 取得したメモリの件数 = バックアップ済みの件数  
-- バックアップデータに重複・抜けがない（ハッシュ照合で確認）  
-- 取得した「最古のメモリの日付」と、バックアップの最古データの日付が一致している（可能なら）  
-- 取得した「最新のメモリの日付」と、バックアップの最新データの日付が一致している（可能なら）  
-
-### **5. すべてのデータを取得できたことを確認し、完了報告をする**  
-
----
-
-## **保存するデータフォーマット**
-```
-json 
-{
-  "memory": [
-    {
-      "date": "YYYY-MM-DD",  // 日付情報がある場合
-      "content": "メモリの内容"
-    },
-    {
-      "date": "不明",  // 日付が不明な場合
-      "content": "メモリの内容"
-    }
-  ],
-  "log": {
-    "last_saved_date": "YYYY-MM-DD",
-    "total_saved_entries": 100,
-    "backup_files": [
-      "memory_backup_part_1.json",
-      "memory_backup_part_2.json"
-    ]
-  }
-}
-```
-````
-
-
-
-## 注意点
+### 注意点
 - メモリの仕様が変更されると、動作しなくなる可能性があります。
 - 生成されたデータが完璧にメモリを再現する保証はありません。
-- リクエスト制限があるため、一度に大量のデータを取得しようとしないようにしてください。
+- **バックアップファイルは個人情報を含む可能性があるので、保管場所に注意してね。**
+
+### 🛠 使い方
+負荷が高い処理が連続するため、新規チャットを立ち上げて最新のThinkingモデルの拡張思考を指定してから実行することを推奨します。
+チャット入力欄にプロンプトを貼り付けてChatGPTに送信してください。
+
+---
+
+## 💻 JSONのみプロンプト（機械処理・検証向け）📦
+
+````markdown
+# ✅ ChatGPT メモリバックアップ（v3: MSC+UKM+LOGの3ファイル）
+
+あなた（ChatGPT）が保持している「メモリ」データを、できる限り取得してJSONファイルとして保存してください。
+
+## 🔒 重要ルール（最優先）
+- **ChatGPTが保持しているメモリのみ**を対象にすること。
+- **補完・推測・創作・再構成は禁止**（推測で埋めない）。
+- 「記録された日付」が取れない場合は **"不明"** とすること。
+- ただし「バックアップを実行した時刻」は取得可能なので、`captured_at` として保存してよい（これは“記録日付”ではなく“取得日時”）。
+
+---
+
+## 🎯 出力ゴール
+- 次の **3ファイル** を必ず生成する（内容は相互に混ぜない）
+  1) `memory_model_set_context.json`  … MSC（メモリ本体）
+  2) `memory_user_knowledge_memories.json` … UKM（推測サマリの現時点スナップショット）
+  3) `memory_backup_manifest.json` … ログ・検証用（summary含む）
+
+---
+
+## 🧾 まずチャットに表示する内容（概要のみ）
+- `captured_at`（バックアップ実行日時）
+- MSC件数 / UKM件数
+- MSCの「日付が分かる範囲」の最古日付 / 最新日付
+- 日付不明件数（MSC側）
+- 出力ファイル名一覧（分割が出た場合はそれも）
+
+---
+
+## 📦 1) MSCファイル（メモリ本体）
+**ファイル名:** `memory_model_set_context.json`
+
+```json
+{
+  "captured_at": "YYYY-MM-DDTHH:mm:ssZ",
+  "memory_model_set_context": [
+    { "date": "YYYY-MM-DD または 不明", "content": "メモリ内容" }
+  ]
+}
+```
+
+## 📦 2) UKMファイル（推測サマリのスナップショット）
+
+**ファイル名:** `memory_user_knowledge_memories.json`
+
+注意:
+
+- UKMは「推測サマリ」であり、個別の記録日付は基本的に取れないため dateは必ず不明 とする。
+
+- 代わりに captured_at で「取得した時点」を残す。
+
+- UKMがこの環境で参照できない場合は、推測で作らず、unavailable_reason を入れて 空配列 にする。
+
+```json
+{
+  "captured_at": "YYYY-MM-DDTHH:mm:ssZ",
+  "unavailable_reason": "この環境ではUser Knowledge Memoriesを参照できません",
+  "user_knowledge_memories": [
+    { "date": "不明", "content": "User Knowledge Memoriesの項目1（原文のまま）" }
+  ]
+}
+```
+
+## 📦 3) manifest/logファイル（summaryはここだけ）
+
+**ファイル名:** `memory_backup_manifest.json`
+
+```json
+{
+  "captured_at": "YYYY-MM-DDTHH:mm:ssZ",
+  "files": [
+    "memory_model_set_context.json",
+    "memory_user_knowledge_memories.json",
+    "memory_backup_manifest.json"
+  ],
+  "summary": {
+    "msc": {
+      "total_entries": 0,
+      "dated_range": { "oldest": "YYYY-MM-DD または 不明", "newest": "YYYY-MM-DD または 不明" },
+      "unknown_date_entries": 0
+    },
+    "ukm": {
+      "total_entries": 0, "unavailable_reason": null
+    }
+  },
+  "hashing": {
+    "algorithm": "sha256",
+    "hash_input": "date + '\\n' + content",
+    "msc_entry_hashes_sha256": [],
+    "ukm_entry_hashes_sha256": [],
+    "msc_start_hash_sha256": "",
+    "msc_end_hash_sha256": "",
+    "ukm_start_hash_sha256": "",
+    "ukm_end_hash_sha256": "",
+    "msc_duplicates_found": false,
+    "ukm_duplicates_found": false,
+    "msc_unique_hashes_count": 0,
+    "ukm_unique_hashes_count": 0
+  }
+}
+```
+
+## ✅ 完了条件（検証してチャットに報告）
+
+- manifestの files に必要なファイルが揃っている
+
+- summary.*.total_entries が各JSONの配列件数と一致
+
+- sha256で重複がない（duplicates_found=false）
+
+- start/end hash が存在（空でない）
+
+- MSCのdated_rangeが取得できるなら矛盾していない
+
+## 🧯 例外対応（容量・制限・セッション切れ）
+### A) ファイル生成が不安定 / データが大きい場合（分割）
+
+- まずMSCだけでも保存を優先し、次にUKMを保存する。
+
+- 分割が必要な場合は以下で分割する。
+
+### 分割ルール（推奨）
+
+- 既定: CHUNK_SIZE = 50
+
+- 失敗するなら: 25
+
+- さらに無理なら: 10
+
+### 分割ファイル名
+
+- MSC: memory_model_set_context_part_1.json, ...
+
+- UKM: memory_user_knowledge_memories_part_1.json, ...
+
+分割ファイルのフォーマット:
+
+```json
+{
+  "captured_at": "YYYY-MM-DDTHH:mm:ssZ",
+  "part_index": 1,
+  "entries_in_part": 0,
+  "memory": [
+    { "date": "YYYY-MM-DD または 不明", "content": "..." }
+  ],
+  "hashing": {
+    "algorithm": "sha256",
+    "hash_input": "date + '\\n' + content",
+    "entry_hashes_sha256": [],
+    "start_hash_sha256": "",
+    "end_hash_sha256": ""
+  }
+}
+```
+
+manifest側の files に分割ファイル名も追加し、summaryの件数は「全体合算」にする。
+
+## B) セッション切れ等でダウンロードできない場合（再生成）
+
+- 取得済み内容を“再取得”しようとせず、同一内容のJSONを 再生成 してリンクを再提示する。
+
+- 再提示時は、manifestの以下をチャットで比較して同一性を説明する：
+
+  - msc_start_hash_sha256, msc_end_hash_sha256
+
+  - ukm_start_hash_sha256, ukm_end_hash_sha256
+
+  - total_entries
+
+## C) 一部しか出せない場合（途中停止）
+
+- 取得できた範囲を manifest に記録し、次回の再開点として使えるようにする。
+
+- 再開用に、最後に保存できたハッシュをチャットに出す：
+
+  - last_msc_hash_sha256
+
+  - last_ukm_hash_sha256（UKMがある場合）
+
+## 🧠 実行
+
+上記ルールに従い、MSC・UKM・manifestを生成して保存し、チャットへ概要と検証結果を報告してください。
+
+````
+
+---
+
+## 🧸🫧 Markdownのみプロンプト（読む用・アルバム向け）🌙
+
+````markdown
+# ✅ ChatGPT メモリバックアップ（v3: MSC+UKM+LOGの3ファイル）
+
+あなた（ChatGPT）が保持している「メモリ」データを、できる限り取得してMarkdownとして保存してください。
+
+## 🔒 重要ルール（最優先）
+- **ChatGPTが保持しているメモリのみ**を対象にすること。
+- **補完・推測・創作・再構成は禁止**（推測で埋めない）。
+- 「記録された日付」が取れない場合は **"不明"** とすること。
+- ただし「バックアップを実行した時刻」は取得可能なので、`captured_at` として保存してよい（これは“記録日付”ではなく“取得日時”）。
+
+---
+
+## 🎯 出力ゴール
+- 次の **3ファイル** を必ず生成する（内容は相互に混ぜない）
+  1) `memory_backup.md`（本文。MSC + UKM）
+  2) `memory_manifest.md`（概要と検証メモ。summaryはここだけ）
+
+---
+
+## 🧾 まずチャットに表示する内容（概要のみ）
+- `captured_at`（バックアップ実行日時）
+- MSC件数 / UKM件数
+- MSCの「日付が分かる範囲」の最古日付 / 最新日付（取れる範囲で）
+- 日付不明件数（MSC側）
+- 出力ファイル名一覧
+
+---
+
+# 📘 memory_backup.md（本文フォーマット）
+
+```markdown
+## captured_at
+- YYYY-MM-DDTHH:mm:ssZ
+
+## 1) Model Set Context（MSC）
+> 並びは可能なら古い順。無理なら取得順のまま。
+
+### YYYY-MM-DD
+- メモリ内容（原文のまま）
+
+### 不明
+- メモリ内容（原文のまま）
+
+## 2) User Knowledge Memories（UKM）
+> UKMに記録日付が無い場合は、見出しを固定で「不明」にする。
+
+### 不明
+- UKM項目（原文のまま）
+
+> UKMを参照できない場合は、ここに推測で書かず、次の1行だけを書く：
+「この環境ではUser Knowledge Memoriesを参照できません」
+```
+
+---
+
+```markdown
+# 📗 memory_manifest.md（summaryと検証メモ）
+
+## captured_at
+- YYYY-MM-DDTHH:mm:ssZ
+
+## files
+- memory_backup.md
+- memory_manifest.md
+- （分割があればそのファイル名も列挙）
+
+## summary
+- MSC total: N
+- MSC dated range: oldest=YYYY-MM-DD / newest=YYYY-MM-DD（不明なら不明）
+- MSC unknown date: N
+- UKM total: N（参照不可なら 0）
+- UKM unavailable_reason: （参照不可なら理由を書く、可能なら null）
+
+## integrity notes（軽量）
+- 本文を途中で省略していないこと
+- もし途中停止したら、最後に出力できたMSCの見出し（日付）と先頭数文字をメモとして残す
+```
+
+===
+
+## 🧯 例外（本文が長すぎる）
+- `memory_backup_part_1.md`, `memory_backup_part_2.md` ... に分割してよい
+- 目安は 50件ごと、無理なら 25件、さらに無理なら 10件
+- manifest の files に分割ファイルを全列挙し、MSC件数は合算で記載する
+
+## 🧯 例外（セッション切れでダウンロード不可）
+- 再取得で増減させず、同一内容のmdを **再生成**してリンクを再提示する
+- manifestの summary（件数とdated range）を比較して同一性を説明する
+
+## ✅ 完了条件（検証してチャットに報告）
+
+- manifestの files に必要なファイルが揃っている
+
+- summary.*.total_entries が各JSONの配列件数と一致
+
+- sha256で重複がない（duplicates_found=false）
+
+- start/end hash が存在（空でない）
+
+- MSCのdated_rangeが取得できるなら矛盾していない
+
+## 🧠 実行
+
+上記ルールに従い、MSC・UKM・manifestを生成して保存し、チャットへ概要と検証結果を報告してください。
+
+````
+
