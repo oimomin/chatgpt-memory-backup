@@ -52,7 +52,7 @@
 
 - 代わりに captured_at で「取得した時点」を残す。
 
-- UKMがこの環境で参照できない場合は、推測で作らず、unavailable_reason を入れて 空配列 にする。
+- UKMがこの環境で参照できない場合は、推測で作らず、unavailable_reason を入れる。
 
 ```json
 {
